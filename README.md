@@ -1,5 +1,5 @@
 # FireHzd
-Software for the flight computer Robin V5.0 I Love Gravity. 
+Software for the Flight Computer V5.0 I Love Gravity. Also compatable with V4.0 Big Brain.
 # Include
 1. DMP output based on MPU6050 example code by Jeff Rowberg 
 2. BMP280 output based on SparkFun examples.
