@@ -1,3 +1,3 @@
-# FireHzd-Software for Robin V5.0 I Love Gravity
-
-![4 0 top](https://user-images.githubusercontent.com/77249429/150355053-fcd02ca2-207e-4b53-9763-21acaf3be78b.png)
+# FireHzd
+Software for the flight computer Robin V5.0 I Love Gravity. 
+![ROBIN 3 0 REARRANGED](https://user-images.githubusercontent.com/77249429/150358776-db84a875-7efb-4005-a72c-61e57e2ebd58.png)
