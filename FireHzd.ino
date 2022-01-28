@@ -151,7 +151,7 @@ struct IMU {
                                 fifoCount -= packetSize;
                         }
 
-#ifdef OUTPUT_READABLE_YAWPITCHROLL
+        #ifdef OUTPUT_READABLE_YAWPITCHROLL
                         // display Euler angles in degrees
                         mpu.dmpGetQuaternion(&q, fifoBuffer);
                         mpu.dmpGetGravity(&gravity, &q);
@@ -195,12 +195,13 @@ struct IMU {
 
 
 };
+
 double offsetX=-7;
 double offsetY=-6;
+
 struct TVC {
 
         double pos;
-
 
         void servo_init(){
 
@@ -236,7 +237,6 @@ struct TVC {
                 }
 
                 X08_X.write(90 + offsetX);
-
                 delay(100);
         }
 
@@ -262,6 +262,7 @@ struct TVC {
                         X08_Y.write(pos);
                         delay(15);
                 }
+
                 X08_Y.write(90 + offsetY);
                 delay(100);
         }
@@ -316,6 +317,7 @@ struct LED {
                 pinMode(15, OUTPUT);
                 pinMode(16, OUTPUT);
         }
+
         void initIndicator(){
                 digitalWrite(14,LOW);
                 delay(200);
@@ -330,6 +332,7 @@ struct LED {
                 digitalWrite(16,HIGH);
                 delay(200);
         }
+
         void imuCheckX(){
                 if((roll-90)>=-3 && (roll-90)<=3) {
                         digitalWrite(14, LOW);
@@ -353,6 +356,7 @@ struct Buzzer {
         void init(){
                 pinMode(10,OUTPUT);
         }
+
         void initIndicator(){
                 digitalWrite(10,HIGH);
                 delay(200);
@@ -401,12 +405,15 @@ void setup(){
 
         myFile = SD.open("TVC_test.csv", FILE_WRITE);
         myFile.print("Time (s)"); myFile.print("\t");
+
         myFile.print("Rotation X (deg)"); myFile.print("\t");
         myFile.print("Rotation Y (deg)"); myFile.print("\t");
         myFile.print("Rotation Z (deg)"); myFile.print("\t");
+
         myFile.print("Accel X (g)"); myFile.print("\t");
         myFile.print("Accel Y (g)"); myFile.print("\t");
         myFile.print("Accel Z (g)"); myFile.print("\t");
+
         myFile.print("Altitude (ft)"); myFile.print("\t");
         myFile.print("Temp (F)"); myFile.print("\t");
         myFile.print("Humidity"); myFile.print("\t");
@@ -449,22 +456,25 @@ void loop() {
         myFile.print("0"); myFile.print("\t");
         myFile.println(bmp.readPressure());
         myFile.close();
-        
+
 // Serial Output
         Serial.print("Time:");Serial.print("\t");
         Serial.print(micros()/1000000.000-processTime); Serial.print("\t");
+
         Serial.print("Roll:");Serial.print("\t");
         Serial.print(roll-90); Serial.print("\t");
         Serial.print("Pitch:");Serial.print("\t");
         Serial.print(pitch-90); Serial.print("\t");
         Serial.print("Yaw:");Serial.print("\t");
         Serial.print(yaw); Serial.print("\t");
+
         Serial.print("AccX:");Serial.print("\t");
         Serial.print(-az/16384.00); Serial.print("\t");
         Serial.print("AccY:");Serial.print("\t");
         Serial.print(-ay/16384.00); Serial.print("\t");
         Serial.print("AccZ:");Serial.print("\t");
         Serial.print(-ax/16384.00); Serial.print("\t");
+
         Serial.print("Alt:");Serial.print("\t");
         Serial.print(bmp.readAltitude(1028.44)); Serial.print("\t");
         Serial.print("Temp:");Serial.print("\t");
@@ -473,8 +483,8 @@ void loop() {
         Serial.print("0"); Serial.print("\t");
         Serial.print("Pressure:");Serial.print("\t");
         Serial.println(bmp.readPressure());
-        led.imuCheckX();
 
+        led.imuCheckX();
         led.imuCheckY();
 
 }
