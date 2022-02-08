@@ -61,7 +61,6 @@ struct IMU {
           #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
                 Fastwire::setup(400, true);
           #endif
-
                 mpu.initialize();
                 pinMode(INTERRUPT_PIN, INPUT);
 
