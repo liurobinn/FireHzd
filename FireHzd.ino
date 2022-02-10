@@ -379,13 +379,48 @@ struct Buzzer {
                 delay(200);
         }
 };
+
+struct PID {
+        float p;
+        float i;
+        float d;
+
+        float integral = 0
+        float lastErr = 0;
+
+        long lastTime = 0;
+
+        float update(float err) {
+
+                long dt = micros() - lastTime;
+                float dx = err - lastErr;
+
+                integral += err*dt;
+                lastTime = micros();
+
+                return p*err + i*integral + d*dx/dt;
+        }
+}
+
 struct BMP280 bmp280;
 struct TVC tvc;
 struct IMU imu;
 struct LED led;
+struct PID xPID;
+struct PID yPID;
 struct Buzzer buzzer;
 double processTime;
 void setup(){
+
+        //PID Configuration
+        xPID.p = 1;
+        xPID.i = 0;
+        xPID.d = 0;
+
+        yPID.p = 1;
+        yPID.i = 0;
+        yPID.d = 0;
+
         Serial.begin(115200);
         imu.init();
         Wire.begin();
@@ -422,11 +457,13 @@ void setup(){
         processTime = micros()/1000000.000;
 }
 
-
-
 void loop() {
         imu.update();
         imu.updateAcc();
+
+
+        X08_X.write(xPID.update(roll));
+        X08_Y.write(yPID.update(pitch));
 
 /*
    //================================================
