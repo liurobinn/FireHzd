@@ -189,7 +189,7 @@ struct IMU {
                 Serial.print(ax/16384.00); Serial.print("\t");
                 Serial.print(ay/16384.00); Serial.print("\t");
                 Serial.print(az/16384.00); Serial.print("\t");
-*/
+ */
         }
 
 
@@ -286,27 +286,27 @@ struct BMP280 {
         }
 
         void serial_update_Temp(){
-          /*
-                Serial.print(F("Temp:"));
-                Serial.print(bmp.readTemperature());
-                Serial.print(" *C"); Serial.println("\t");
-          */
+                /*
+                      Serial.print(F("Temp:"));
+                      Serial.print(bmp.readTemperature());
+                      Serial.print(" *C"); Serial.println("\t");
+                 */
         }
 
         void serial_update_Pressure(){
-          /*
-                Serial.print(F("Pressure:"));
-                Serial.print(bmp.readPressure());
-                Serial.print(" Pa"); Serial.print("\t");
-          */
+                /*
+                      Serial.print(F("Pressure:"));
+                      Serial.print(bmp.readPressure());
+                      Serial.print(" Pa"); Serial.print("\t");
+                 */
         }
 
         void serial_update_Alt(){
-          /*
-                Serial.print(F("Alt:"));
-                Serial.print(bmp.readAltitude(1013.25));
-                Serial.print(" m"); Serial.println("\t");
-          */
+                /*
+                      Serial.print(F("Alt:"));
+                      Serial.print(bmp.readAltitude(1013.25));
+                      Serial.print(" m"); Serial.println("\t");
+                 */
         }
 };
 
@@ -385,8 +385,13 @@ struct PID {
         float i;
         float d;
 
+<<<<<<< HEAD
         float integral = 0;
         float lastErr = 0;
+=======
+        float integral = 0
+                         float lastErr = 0;
+>>>>>>> 8602ea00f6539df330c5a380392e04c3dd3281e4
 
         long lastTime = 0;
 
@@ -511,30 +516,38 @@ void loop() {
         myFile.close();
 
 // Serial Output
-        Serial.print("Time:");Serial.print("\t");
+        Serial.print("Time:"); Serial.print("\t");
         Serial.print(micros()/1000000.000-processTime); Serial.print("\t");
 
+<<<<<<< HEAD
         Serial.print("Roll:");Serial.print("\t");
         Serial.print(roll); Serial.print("\t");
         Serial.print("Pitch:");Serial.print("\t");
         Serial.print(pitch); Serial.print("\t");
         Serial.print("Yaw:");Serial.print("\t");
+=======
+        Serial.print("Roll:"); Serial.print("\t");
+        Serial.print(roll-90); Serial.print("\t");
+        Serial.print("Pitch:"); Serial.print("\t");
+        Serial.print(pitch-90); Serial.print("\t");
+        Serial.print("Yaw:"); Serial.print("\t");
+>>>>>>> 8602ea00f6539df330c5a380392e04c3dd3281e4
         Serial.print(yaw); Serial.print("\t");
 
-        Serial.print("AccX:");Serial.print("\t");
+        Serial.print("AccX:"); Serial.print("\t");
         Serial.print(-az/16384.00); Serial.print("\t");
-        Serial.print("AccY:");Serial.print("\t");
+        Serial.print("AccY:"); Serial.print("\t");
         Serial.print(-ay/16384.00); Serial.print("\t");
-        Serial.print("AccZ:");Serial.print("\t");
+        Serial.print("AccZ:"); Serial.print("\t");
         Serial.print(-ax/16384.00); Serial.print("\t");
 
-        Serial.print("Alt:");Serial.print("\t");
+        Serial.print("Alt:"); Serial.print("\t");
         Serial.print(bmp.readAltitude(1028.44)); Serial.print("\t");
-        Serial.print("Temp:");Serial.print("\t");
+        Serial.print("Temp:"); Serial.print("\t");
         Serial.print(bmp.readTemperature()); Serial.print("\t");
-        Serial.print("Humidity:");Serial.print("\t");
+        Serial.print("Humidity:"); Serial.print("\t");
         Serial.print("0"); Serial.print("\t");
-        Serial.print("Pressure:");Serial.print("\t");
+        Serial.print("Pressure:"); Serial.print("\t");
         Serial.println(bmp.readPressure());
 
         //led.imuCheckX();
