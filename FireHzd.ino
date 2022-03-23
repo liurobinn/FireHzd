@@ -197,7 +197,7 @@ struct IMU {
 
 double offsetX=4;
 double offsetY=0;
-
+int t;
 struct TVC {
 
         double pos;
@@ -216,21 +216,21 @@ struct TVC {
 
                 pos= 90 + offsetX;
                 Serial.println(pos);
-                for (pos = 90 + offsetX; pos >= 80 +offsetX; pos -= 1) {
+                for (pos = 90 + offsetX; pos >= 82 +offsetX; pos -= 1) {
 
                         X08_X.write(pos);
                         delay(15);
                 }
                 delay(15);
 
-                for (pos = 80 +offsetX; pos <= 100 + offsetX; pos += 1) {
+                for (pos = 82 +offsetX; pos <= 98 + offsetX; pos += 1) {
 
                         X08_X.write(pos);
                         delay(15);
                 }
                 delay(15);
 
-                for (pos = 100 + offsetX; pos >= 90 + offsetX; pos -= 1) {
+                for (pos = 98 + offsetX; pos >= 90 + offsetX; pos -= 1) {
                         X08_X.write(pos);
                         delay(15);
                 }
@@ -265,6 +265,23 @@ struct TVC {
                 X08_Y.write(90 + offsetY);
                 delay(100);
         }
+        void X80_test(){
+
+          for (t=0; t>= 0 and t <=1440; t++) {
+          roll=asin(0.05*cos((3.14/180)*t));
+          pitch=asin(0.05*sin((3.14/180)*t));
+          X08_X.write(roll * 180+90+offsetX);
+
+          X08_Y.write(pitch * 180+90+offsetY);
+          delay(5);
+        }
+
+          X08_X.write(90+offsetX);
+          X08_Y.write(90+offsetY);
+          delay(100);
+
+      }
+
 
 };
 
@@ -312,16 +329,16 @@ struct BMP280 {
 
 struct LED {
         void init(){
-                //pinMode(14, OUTPUT);
+                pinMode(14, OUTPUT);
                 pinMode(15, OUTPUT);
                 pinMode(16, OUTPUT);
         }
 
         void initIndicator(){
-                //digitalWrite(14,LOW);
-                //delay(200);
-                //digitalWrite(14,HIGH);
-                //delay(200);
+                digitalWrite(14,LOW);
+                delay(200);
+                digitalWrite(14,HIGH);
+                delay(200);
                 digitalWrite(15,LOW);
                 delay(200);
                 digitalWrite(15,HIGH);
@@ -385,13 +402,8 @@ struct PID {
         float i;
         float d;
 
-<<<<<<< HEAD
         float integral = 0;
-        float lastErr = 0;
-=======
-        float integral = 0
                          float lastErr = 0;
->>>>>>> 8602ea00f6539df330c5a380392e04c3dd3281e4
 
         long lastTime = 0;
 
@@ -407,19 +419,6 @@ struct PID {
         }
 };
 
-struct pyrotest{
-  init(){
-    pinMode(21,OUTPUT);
-    digitalWrite(21,LOW);
-  }
-  on(){
-    digitalWrite(21,HIGH);
-    delay(2500);
-    digitalWrite(21,LOW);
-    delay(2500);
-  }
-};
-
 struct BMP280 bmp280;
 struct TVC tvc;
 struct IMU imu;
@@ -427,10 +426,9 @@ struct LED led;
 struct PID xPID;
 struct PID yPID;
 struct Buzzer buzzer;
-struct pyrotest pyroTest;
 double processTime;
 void setup(){
-//pyroTest.init();
+
         //PID Configuration
         xPID.p = 1;
         xPID.i = 0;
@@ -441,24 +439,21 @@ void setup(){
         yPID.d = 0;
 
         Serial.begin(115200);
-
-        //pyroTest.on();
         imu.init();
         Wire.begin();
         bmp280.init();
         tvc.servo_init();
         tvc.X80_testX();
         tvc.X80_testY();
+        tvc.X80_test();
         led.init();
         led.initIndicator();
         buzzer.init();
-        buzzer.initIndicator();
+        //buzzer.initIndicator();
         if (!SD.begin(chipSelect)) {
                 //Serial.println("error");
                 return;
         }
-
-
 
         myFile = SD.open("TVC_test.csv", FILE_WRITE);
         myFile.print("Time (s)"); myFile.print("\t");
@@ -481,21 +476,21 @@ void setup(){
 }
 
 void loop() {
-
+  /*
         imu.update();
         imu.updateAcc();
 
 
+//        X08_X.write(xPID.update(roll));
+  //      X08_Y.write(yPID.update(pitch));
 
-//X08_X.write(xPID.update(roll+offsetX));
-//X08_Y.write(yPID.update(pitch+offsetY));
 
    //================================================
    //==== TVC Write Based on DMP data and offset ====
    //================================================
-        if (pitch >= 82 && pitch <= 98 && roll >= 82 && roll <= 98) {
-                X08_Y.write(xPID.update(roll+offsetY));
-                X08_X.write(yPID.update(pitch+offsetX));
+        if (roll >= 75 && roll <= 105 && pitch >= 75 && pitch <= 105 ) {
+                X08_X.write(xPID.update(roll)+offsetX);
+                X08_Y.write(yPID.update(pitch)+offsetY);
         }
 
 
@@ -519,19 +514,11 @@ void loop() {
         Serial.print("Time:"); Serial.print("\t");
         Serial.print(micros()/1000000.000-processTime); Serial.print("\t");
 
-<<<<<<< HEAD
-        Serial.print("Roll:");Serial.print("\t");
-        Serial.print(roll); Serial.print("\t");
-        Serial.print("Pitch:");Serial.print("\t");
-        Serial.print(pitch); Serial.print("\t");
-        Serial.print("Yaw:");Serial.print("\t");
-=======
         Serial.print("Roll:"); Serial.print("\t");
         Serial.print(roll-90); Serial.print("\t");
         Serial.print("Pitch:"); Serial.print("\t");
         Serial.print(pitch-90); Serial.print("\t");
         Serial.print("Yaw:"); Serial.print("\t");
->>>>>>> 8602ea00f6539df330c5a380392e04c3dd3281e4
         Serial.print(yaw); Serial.print("\t");
 
         Serial.print("AccX:"); Serial.print("\t");
@@ -550,9 +537,7 @@ void loop() {
         Serial.print("Pressure:"); Serial.print("\t");
         Serial.println(bmp.readPressure());
 
-        //led.imuCheckX();
-        //led.imuCheckY();
-//pyroTest.on();
-
-
+        led.imuCheckX();
+        led.imuCheckY();
+*/
 }
