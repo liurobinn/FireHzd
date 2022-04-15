@@ -42,6 +42,13 @@ float pitch;
 float roll;
 float yaw;
 
+double XservoVal;
+double YservoVal;
+double XUpperLimit;
+double YUpperLimit;
+double XLowerLimit;
+double YLowerLimit;
+
 int16_t ax, ay, az;
 
 volatile bool mpuInterrupt = false;
@@ -195,7 +202,7 @@ struct IMU {
 
 };
 
-double offsetX=4; //TVC Mount Offsets X
+double offsetX=7; //TVC Mount Offsets X
 double offsetY=0; //TVC Mount Offsets Y
 int t;
 struct TVC {
@@ -271,7 +278,8 @@ struct TVC {
           roll=asin(0.05*cos((3.14/180)*t));
           pitch=asin(0.07*sin((3.14/180)*t));
           X08_X.write(roll * 180+90+offsetX);
-
+          Serial.print(roll * 180+90);
+          Serial.println(pitch * 180+90);
           X08_Y.write(pitch * 180+90+offsetY);
           delay(5);
         }
@@ -405,11 +413,11 @@ struct PID {
         float integral = 0;
                          float lastErr = 0;
 
-        long lastTime = 0;
+        long lastTime = micros();
 
         float update(float err) {
 
-                long dt = micros() - lastTime;
+                double dt = (micros() - lastTime);
                 float dx = err - lastErr;
 
                 integral += err*dt;
@@ -452,11 +460,11 @@ double processTime;
 void setup(){
 
         //PID Configuration
-        xPID.p = 1;
+        xPID.p = 0.5;
         xPID.i = 0;
         xPID.d = 0;
 
-        yPID.p = 1;
+        yPID.p = 0.5;
         yPID.i = 0;
         yPID.d = 0;
 
@@ -468,9 +476,9 @@ void setup(){
         tvc.X80_testX();
         tvc.X80_testY();
         tvc.X80_test();
-        led.init();
-        led.initIndicator();
-        buzzer.init();
+        //led.init();
+        //led.initIndicator();
+        //buzzer.init();
         //buzzer.initIndicator();
         if (!SD.begin(chipSelect)) {
         //Serial.println("error");
@@ -495,6 +503,7 @@ void setup(){
         myFile.close();
 
         processTime = micros()/1000000.000;
+        
 }
 
 void loop() {
@@ -502,19 +511,21 @@ void loop() {
         imu.update();
         imu.updateAcc();
 
+        XservoVal= xPID.update(roll-90)+90+offsetX;
+        YservoVal= yPID.update(pitch-90)+90+offsetY;
+        XUpperLimit= 99 + offsetX;
+        XLowerLimit= 81 + offsetX;
+        YUpperLimit= 75 + offsetY;
+        YLowerLimit= 105 + offsetY;
 
-//        X08_X.write(xPID.update(roll));
-//        X08_Y.write(yPID.update(pitch));
-
-
+ 
+        X08_X.write(XservoVal);
+        X08_Y.write(YservoVal);
+  
    //================================================
    //==== TVC Write Based on DMP data and offset ====
    //================================================
-        if (roll >= 75 && roll <= 105 && pitch >= 75 && pitch <= 105 ) {
-                X08_X.write(xPID.update(roll)+offsetX);
-                X08_Y.write(yPID.update(pitch)+offsetY);
-        }
-
+        
 
 //SD Write
         myFile = SD.open("TVC_test.csv", FILE_WRITE);
@@ -537,9 +548,10 @@ void loop() {
         Serial.print(micros()/1000000.000-processTime); Serial.print("\t");
 
         Serial.print("Roll:"); Serial.print("\t");
-        Serial.print(roll-90); Serial.print("\t");
+        Serial.print(XservoVal); Serial.print("\t");
         Serial.print("Pitch:"); Serial.print("\t");
-        Serial.print(pitch-90); Serial.print("\t");
+        Serial.print(YservoVal); Serial.print("\t");
+        /*
         Serial.print("Yaw:"); Serial.print("\t");
         Serial.print(yaw); Serial.print("\t");
 
@@ -556,10 +568,11 @@ void loop() {
         Serial.print(bmp.readTemperature()); Serial.print("\t");
         Serial.print("Humidity:"); Serial.print("\t");
         Serial.print("0"); Serial.print("\t");
+        */
         Serial.print("Pressure:"); Serial.print("\t");
         Serial.println(bmp.readPressure());
 
-        led.imuCheckX();
-        led.imuCheckY();
+        //led.imuCheckX();
+        //led.imuCheckY();
 
 }
