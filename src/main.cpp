@@ -436,9 +436,7 @@ struct PYRO{
 
 struct FlightControl{
         void launchDetect(){
-                if(){
-                        
-                }
+                
         }
 };
 
