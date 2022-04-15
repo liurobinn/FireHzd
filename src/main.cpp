@@ -1,4 +1,4 @@
-#include "I2Cdev.h"
+#include "I2Cdev.h" 
 #include <Servo.h>
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "MPU6050.h"
@@ -159,7 +159,7 @@ struct IMU {
                         //Serial.print(yaw);
                         //Serial.print("\t");
 
-                        double val;
+                        double val=0;
                         double prev;
 
                         prev = val;
@@ -185,7 +185,7 @@ struct IMU {
         }
         void updateAcc(){
                 mpu.getAcceleration(&ax, &ay, &az);
-/*
+ /*
                 Serial.print(ax/16384.00); Serial.print("\t");
                 Serial.print(ay/16384.00); Serial.print("\t");
                 Serial.print(az/16384.00); Serial.print("\t");
@@ -195,8 +195,8 @@ struct IMU {
 
 };
 
-double offsetX=4;
-double offsetY=0;
+double offsetX=4; //TVC Mount Offsets X
+double offsetY=0; //TVC Mount Offsets Y
 int t;
 struct TVC {
 
@@ -418,6 +418,7 @@ struct PID {
                 return p*err + i*integral + d*dx/dt;
         }
 };
+
 struct PYRO{
 
   void init(){
@@ -432,6 +433,15 @@ struct PYRO{
   }
 
 };
+
+struct FlightControl{
+        void launchDetect(){
+                if(){
+                        
+                }
+        }
+};
+
 struct BMP280 bmp280;
 struct TVC tvc;
 struct IMU imu;
@@ -465,8 +475,8 @@ void setup(){
         buzzer.init();
         //buzzer.initIndicator();
         if (!SD.begin(chipSelect)) {
-                //Serial.println("error");
-                return;
+        //Serial.println("error");
+        return;
         }
 
         myFile = SD.open("TVC_test.csv", FILE_WRITE);
