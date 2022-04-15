@@ -1,1 +1,1 @@
-This folder contains the code for the flight software
+This folder contains the code for the flight software.
