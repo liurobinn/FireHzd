@@ -513,6 +513,7 @@ void loop() {
 
         XservoVal= xPID.update(roll-90)+90+offsetX;
         YservoVal= yPID.update(pitch-90)+90+offsetY;
+        
         XUpperLimit= 99 + offsetX;
         XLowerLimit= 81 + offsetX;
         YUpperLimit= 75 + offsetY;
