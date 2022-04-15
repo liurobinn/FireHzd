@@ -520,8 +520,8 @@ void loop() {
         YLowerLimit= 105 + offsetY;
 
  
-        X08_X.write(XservoVal);
-        X08_Y.write(YservoVal);
+        X08_X.write(XservoVal);// real servo output
+        X08_Y.write(YservoVal);// real servo output
   
    //================================================
    //==== TVC Write Based on DMP data and offset ====
