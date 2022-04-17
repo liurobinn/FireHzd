@@ -416,7 +416,7 @@ struct PID {
 
         long lastTime = micros();
 
-        float update(float err) {//I assume here the err means the different between 90 degrees and the given angle
+        float update(float err) {//I assume here the err means the difference between 90 degrees and the given angle
 
                 double dt = (micros() - lastTime);
                 //seems like timer is in microsecond, so the integrals are getting super big. I wonder if we should devide it by 1000000...
