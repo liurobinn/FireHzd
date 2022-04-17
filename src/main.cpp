@@ -7,7 +7,7 @@
 #include <SD.h>
 #include <SPI.h>
 
-File myFile;
+File myFile;// test upload from macbook 2017
 
 const int chipSelect = BUILTIN_SDCARD;
 
