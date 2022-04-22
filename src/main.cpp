@@ -407,25 +407,25 @@ struct Buzzer {
 };
 
 struct PID {
-        float p;
-        float i;
-        float d;
+        long double p;
+        long double i;
+        long double d;
 
-        float integral = 0;
-                         float lastErr = 0;
+        long double integral = 0;
+        long double lastErr = 0;
 
-        long lastTime = micros();
+        long double lastTime = millis()/10;
 
-        float update(float err) {//I assume here the err means the difference between 90 degrees and the given angle
+        float update(long double err) {
 
-                double dt = (micros() - lastTime);
-                //seems like timer is in microsecond, so the integrals are getting super big. I wonder if we should devide it by 1000000...
-                float dx = err - lastErr;
-
+                long double dt = (millis()/10 - lastTime);
+                
+                long double dx = err - lastErr;
+                lastErr=err;
                 integral += err*dt;
-                lastTime = micros();
+                lastTime = millis()/10;
 
-                return p*err + i*integral + d*dx/dt;// without millisecond, I think the numbers for it is getting super big. 
+                return p*err + i*integral/100 + d*dx/(dt/100);
         }
 };
 
@@ -463,12 +463,12 @@ void setup(){
 
         //PID Configuration
         xPID.p = 0.5;
-        xPID.i = 0;
-        xPID.d = 0;
+        xPID.i = 0.001;
+        xPID.d = 0.1;
 
         yPID.p = 0.5;
-        yPID.i = 0;
-        yPID.d = 0;
+        yPID.i = 0.001;
+        yPID.d = 0.1;
 
         Serial.begin(115200);
         imu.init();
