@@ -1,66 +1,165 @@
 #include <Arduino.h>
-#include "I2Cdev.h" 
+#include <I2Cdev.h>
 #include <Servo.h>
-#include "MPU6050_6Axis_MotionApps20.h"
-#include "MPU6050.h"
+#include <MPU6050_6Axis_MotionApps20.h>
 #include <Adafruit_BMP280.h>
-#include "Wire.h"
+#include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
 
+MPU6050 mpu;
 File myFile;
 
-const int chipSelect = BUILTIN_SDCARD;
+double offsetX=7; //TVC Mount Offsets X
+double offsetY=0; //TVC Mount Offsets Y
 
-MPU6050 mpu;
-Adafruit_BMP280 bmp;
-Servo X08_X;
-Servo X08_Y;
-
-#define OUTPUT_READABLE_YAWPITCHROLL
-#define INTERRUPT_PIN 2
-#define LED_PIN 13
-
-bool blinkState = false;
-bool dmpReady = false;
-
-uint8_t mpuIntStatus;
-uint8_t devStatus;
-uint16_t packetSize;
-uint16_t fifoCount;
-uint8_t fifoBuffer[64];
-
-// orientation/motion vars
-Quaternion q;
-VectorInt16 aa;
-VectorInt16 aaReal;
-VectorInt16 aaWorld;
-VectorFloat gravity;
-
-float euler[3];
-float ypr[3];
-float pitch;
-float roll;
-float yaw;
+double processTime;
 
 double XservoVal;
 double YservoVal;
-double XUpperLimit;
-double YUpperLimit;
-double XLowerLimit;
-double YLowerLimit;
-
-int16_t ax, ay, az;
 
 volatile bool mpuInterrupt = false;
 
 void dmpDataReady() {
-        mpuInterrupt = true;
+mpuInterrupt = true;
 }
 
+double pos;
 
-struct IMU {
+int16_t ax, ay, az;
 
+Servo X08_X;
+Servo X08_Y;
+
+float pitch;
+float roll;
+float yaw;
+
+float euler[3];
+float ypr[3];
+
+const int chipSelect = BUILTIN_SDCARD;
+Adafruit_BMP280 bmp;
+
+bool MotorOne= false;
+bool MotorTwo= false;
+
+class Thrust_Vector_Ctrl{
+private:
+        int t;
+public: 
+        double XUpperLimit= 99 + offsetX;
+        double YUpperLimit= 81 + offsetX;
+        double XLowerLimit= 75 + offsetY;
+        double YLowerLimit= 105 + offsetY;
+        
+        void servo_init(){
+
+                X08_X.attach(3);
+                X08_Y.attach(4);
+
+                X08_X.write(90+offsetX);
+                X08_Y.write(90+offsetY);
+
+        }
+
+        void X80_testX(){
+
+                pos= 90 + offsetX;
+                Serial.println(pos);
+                for (pos = 90 + offsetX; pos >= 82 +offsetX; pos -= 1) {
+
+                        X08_X.write(pos);
+                        delay(15);
+                }
+                delay(15);
+
+                for (pos = 82 +offsetX; pos <= 98 + offsetX; pos += 1) {
+
+                        X08_X.write(pos);
+                        delay(15);
+                }
+                delay(15);
+
+                for (pos = 98 + offsetX; pos >= 90 + offsetX; pos -= 1) {
+                        X08_X.write(pos);
+                        delay(15);
+                }
+
+                X08_X.write(90 + offsetX);
+                delay(100);
+        }
+
+        void X80_testY(){
+
+                pos= 90 + offsetY;
+                Serial.println(pos);
+                for (pos = 90 + offsetY; pos >= 75 +offsetY; pos -= 1) {
+
+                        X08_Y.write(pos);
+                        delay(15);
+                }
+                delay(15);
+
+                for (pos = 75 +offsetY; pos <= 105 + offsetY; pos += 1) {
+
+                        X08_Y.write(pos);
+                        delay(15);
+                }
+                delay(15);
+
+                for (pos = 105 + offsetY; pos >= 90 + offsetY; pos -= 1) {
+                        X08_Y.write(pos);
+                        delay(15);
+                }
+
+                X08_Y.write(90 + offsetY);
+                delay(100);
+        }
+        //test ejection
+        void ejection(){
+
+          for (t=0; t>= 0 && t <=1440; t++) {
+          roll=asin(0.05*cos((3.14/180)*t));
+          pitch=asin(0.07*sin((3.14/180)*t));
+          X08_X.write(roll * 180+90+offsetX);
+          Serial.print(roll * 180+90);
+          Serial.println(pitch * 180+90);
+          X08_Y.write(pitch * 180+90+offsetY);
+          delay(5);
+        }
+
+          X08_X.write(90+offsetX);
+          X08_Y.write(90+offsetY);
+          delay(100);
+
+      }
+
+};
+
+class IMU{
+private:
+        #define OUTPUT_READABLE_YAWPITCHROLL
+        #define INTERRUPT_PIN 2
+        #define LED_PIN 13
+
+        bool blinkState = false;
+        bool dmpReady = false;
+
+        uint8_t mpuIntStatus;
+        uint8_t devStatus;
+        uint16_t packetSize;
+        uint16_t fifoCount;
+        uint8_t fifoBuffer[64];
+
+        // orientation/motion vars
+        Quaternion q;
+        VectorInt16 aa;
+        VectorInt16 aaReal;
+        VectorInt16 aaWorld;
+        VectorFloat gravity;
+       
+public:
         void init(){
                 // join I2C bus (I2Cdev library doesn't do this automatically)
           #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -199,102 +298,13 @@ struct IMU {
                 Serial.print(az/16384.00); Serial.print("\t");
  */
         }
+        
 
 
 };
 
-double offsetX=7; //TVC Mount Offsets X
-double offsetY=0; //TVC Mount Offsets Y
-int t;
-struct TVC {
-
-        double pos;
-
-        void servo_init(){
-
-                X08_X.attach(3);
-                X08_Y.attach(4);
-
-                X08_X.write(90+offsetX);
-                X08_Y.write(90+offsetY);
-
-        }
-
-        void X80_testX(){
-
-                pos= 90 + offsetX;
-                Serial.println(pos);
-                for (pos = 90 + offsetX; pos >= 82 +offsetX; pos -= 1) {
-
-                        X08_X.write(pos);
-                        delay(15);
-                }
-                delay(15);
-
-                for (pos = 82 +offsetX; pos <= 98 + offsetX; pos += 1) {
-
-                        X08_X.write(pos);
-                        delay(15);
-                }
-                delay(15);
-
-                for (pos = 98 + offsetX; pos >= 90 + offsetX; pos -= 1) {
-                        X08_X.write(pos);
-                        delay(15);
-                }
-
-                X08_X.write(90 + offsetX);
-                delay(100);
-        }
-
-        void X80_testY(){
-
-                pos= 90 + offsetY;
-                Serial.println(pos);
-                for (pos = 90 + offsetY; pos >= 75 +offsetY; pos -= 1) {
-
-                        X08_Y.write(pos);
-                        delay(15);
-                }
-                delay(15);
-
-                for (pos = 75 +offsetY; pos <= 105 + offsetY; pos += 1) {
-
-                        X08_Y.write(pos);
-                        delay(15);
-                }
-                delay(15);
-
-                for (pos = 105 + offsetY; pos >= 90 + offsetY; pos -= 1) {
-                        X08_Y.write(pos);
-                        delay(15);
-                }
-
-                X08_Y.write(90 + offsetY);
-                delay(100);
-        }
-        void X80_test(){
-
-          for (t=0; t>= 0 && t <=1440; t++) {
-          roll=asin(0.05*cos((3.14/180)*t));
-          pitch=asin(0.07*sin((3.14/180)*t));
-          X08_X.write(roll * 180+90+offsetX);
-          Serial.print(roll * 180+90);
-          Serial.println(pitch * 180+90);
-          X08_Y.write(pitch * 180+90+offsetY);
-          delay(5);
-        }
-
-          X08_X.write(90+offsetX);
-          X08_Y.write(90+offsetY);
-          delay(100);
-
-      }
-
-
-};
-
-struct BMP280 {
+class BMP280 {
+public:
         void init(){
 
                 if (!bmp.begin()) {
@@ -336,7 +346,8 @@ struct BMP280 {
         }
 };
 
-struct LED {
+class LED {
+public:
         void init(){
                 pinMode(14, OUTPUT);
                 pinMode(15, OUTPUT);
@@ -358,26 +369,10 @@ struct LED {
                 delay(200);
         }
 
-        void imuCheckX(){
-                if((roll-90)>=-3 && (roll-90)<=3) {
-                        digitalWrite(14, LOW);
-                }
-                if((roll-90)<=-3 || (roll-90)>=3) {
-                        digitalWrite(14, HIGH);
-                }
-        }
-
-        void imuCheckY(){
-                if((pitch-90)>=-3 && (pitch-90)<=3) {
-                        digitalWrite(15, LOW);
-                }
-                if((pitch-90)<=-3 || (pitch-90)>=3) {
-                        digitalWrite(15, HIGH);
-                }
-        }
 };
 
-struct Buzzer {
+class Buzzer {
+public:
         void init(){
                 pinMode(10,OUTPUT);
         }
@@ -406,15 +401,15 @@ struct Buzzer {
         }
 };
 
-struct PID {
+class PID {
+         
+public:
+        long double lastTime = millis()/10;     
+        long double integral = 0;
+        long double lastErr = 0;
         long double p;
         long double i;
         long double d;
-
-        long double integral = 0;
-        long double lastErr = 0;
-
-        long double lastTime = millis()/10;
 
         float update(long double err) {
 
@@ -429,46 +424,164 @@ struct PID {
         }
 };
 
-struct PYRO{
+class PYRO{
+public:
 
   void init(){
     pinMode(20,OUTPUT);
   }
 
-  void test(){
-    digitalWrite(20,HIGH);
-    delay(1000);
-    digitalWrite(20,LOW);
-    delay(1000);
+  bool AscendingIgnition(){
+        digitalWrite(20,HIGH);
+        delay(1000);
+        digitalWrite(20,LOW);
+        delay(1000);
+
+         MotorOne=true;
+
+    return MotorOne;
   }
 
 };
 
-struct FlightControl{
-        void launchDetect(){
+
+class FlightCtrl{
+
+public:
+        PYRO pyro;
+        PID xPID;
+        PID yPID;
+        Thrust_Vector_Ctrl tvc;
+        const int GROUND = 0;
+        const int LAUNCH = 1;
+        const int ASCENDING = 2;
+        const int APOGEE = 3;
+        const int DESCENDING = 4;
+
+        int flightState = GROUND;
+
+        void update() {
+
+                if(flightState == GROUND) {
+                        //launch procedure
+                }
+                if(flightState == LAUNCH && launchDetect()) {
+                        flightState = ASCENDING;
+                }
+                if(flightState == ASCENDING) {
+                        ascending();
+                }
+                if(flightState == ASCENDING && apogeeDectect()){
+                        //motor ejection
+                        //flap deployment
+                        flightState = DESCENDING;
+                }
+                if(flightState == DESCENDING){
+                        descending();
+                }
+
+                //update flight state
+                //do pid stuff
+        }
+
+        bool launchDetect(){
+                if(pyro.AscendingIgnition() == true /*&& gravitational accleration*/ ){
+                        //add led?
+                        flightState = LAUNCH;
+                        return true;
+                }else{
+                        return false;
+                }
+                //check accelerometer for spike
+                //return true if launched
+        }
+        void ascending(){
+                xPID.p = 0.5;
+                xPID.i = 0.001;
+                xPID.d = 0.1;
+
+                yPID.p = 0.5;
+                yPID.i = 0.001;
+                yPID.d = 0.1;
+
+                XservoVal= xPID.update(roll-90)+90+offsetX;
+                YservoVal= yPID.update(pitch-90)+90+offsetY;
+ 
+                X08_X.write(XservoVal);// real servo output
+                X08_Y.write(YservoVal);// real servo output
+
+        }
+        void descending(){
+                xPID.p = 0.5;
+                xPID.i = 0.001;
+                xPID.d = 0.1;
+
+                yPID.p = 0.5;
+                yPID.i = 0.001;
+                yPID.d = 0.1;
+
+                //altitude processing
+                //acceleration
+                //thrust curve
                 
+                XservoVal= xPID.update(roll-90)+90+offsetX;
+                YservoVal= yPID.update(pitch-90)+90+offsetY;
+ 
+                X08_X.write(XservoVal);// real servo output
+                X08_Y.write(YservoVal);// real servo output
+
+        }
+        bool apogeeDectect(){
+
+        }
+
+        double lastBaro;
+        double last_dP; //change in pressure
+        int lastSign;
+        double dP;
+        int sign;
+        bool Apogee= false;
+
+        bool baroApogee(){
+                for (int p=0; p <= 10; p++){
+                dP= bmp.readAltitude(1028.44)- lastBaro;
+                sign= dP/abs(dP);
+                if(lastSign+sign == 1){
+                        Apogee= true;
+                        return true;
+                }
+                last_dP= bmp.readAltitude(1028.44) - lastBaro;
+                lastBaro= bmp.readAltitude(1028.44); 
+                lastSign= last_dP/abs(last_dP);
+                }
+                return Apogee;
+        }
+        
+        bool apogee(){
+                if(baroApogee() == true) {
+                        //maybe add the acclerometer data? Idk
+                        return true;
+                }else{
+                        return false;
+                }
+                //detect apogee through the accelerometer and the barometer 
+                //motor ejection
         }
 };
 
-struct BMP280 bmp280;
-struct TVC tvc;
-struct IMU imu;
-struct LED led;
-struct PID xPID;
-struct PID yPID;
-struct Buzzer buzzer;
-struct PYRO pyro;
-double processTime;
+IMU imu;
+BMP280 bmp280;
+
+LED led;
+
+Buzzer buzzer;
+PYRO pyro;
+FlightCtrl FlightControl;
+
 void setup(){
 
         //PID Configuration
-        xPID.p = 0.5;
-        xPID.i = 0.001;
-        xPID.d = 0.1;
-
-        yPID.p = 0.5;
-        yPID.i = 0.001;
-        yPID.d = 0.1;
+        
 
         Serial.begin(115200);
         imu.init();
@@ -513,17 +626,7 @@ void loop() {
         imu.update();
         imu.updateAcc();
 
-        XservoVal= xPID.update(roll-90)+90+offsetX;
-        YservoVal= yPID.update(pitch-90)+90+offsetY;
         
-        XUpperLimit= 99 + offsetX;
-        XLowerLimit= 81 + offsetX;
-        YUpperLimit= 75 + offsetY;
-        YLowerLimit= 105 + offsetY;
-
- 
-        X08_X.write(XservoVal);// real servo output
-        X08_Y.write(YservoVal);// real servo output
   
    //================================================
    //==== TVC Write Based on DMP data and offset ====
