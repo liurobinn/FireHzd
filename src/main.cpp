@@ -116,8 +116,7 @@ public:
                 X08_Y.write(90 + offsetY);
                 delay(100);
         }
-        //test ejection
-        void ejection(){
+        void rotationTest(){
 
           for (t=0; t>= 0 && t <=1440; t++) {
           roll=asin(0.05*cos((3.14/180)*t));
@@ -134,6 +133,29 @@ public:
           delay(100);
 
       }
+      void ejection(){
+
+                delay(3000);
+                
+                for (pos=90+offsetY; pos >= 30 +offsetY; pos -= 1) {
+
+                        X08_Y.write(pos);
+                        delay(5);
+                }
+                delay(30);
+
+                
+
+                for (pos=30+offsetY; pos <= 90 +offsetY; pos += 1) {
+
+                        X08_Y.write(pos);
+                        delay(1);
+                }
+                delay(40);
+                        
+                
+                delay(15);
+        }
 
 };
 
@@ -452,6 +474,12 @@ public:
         PID xPID;
         PID yPID;
         Thrust_Vector_Ctrl tvc;
+        IMU imu;
+        BMP280 bmp280;
+        LED led;
+        Buzzer buzzer;
+        PYRO pyro;
+
         const int GROUND = 0;
         const int LAUNCH = 1;
         const int ASCENDING = 2;
@@ -463,7 +491,17 @@ public:
         void update() {
 
                 if(flightState == GROUND) {
-                        //launch procedure
+                        imu.init();
+                        Wire.begin();
+                        bmp280.init();
+                        tvc.servo_init();
+                        tvc.X80_testX();
+                        tvc.X80_testY();
+                        tvc.rotationTest();
+                        led.init();
+                        led.initIndicator();
+                        buzzer.init();
+                        buzzer.initIndicator();
                 }
                 if(flightState == LAUNCH && launchDetect()) {
                         flightState = ASCENDING;
@@ -472,7 +510,7 @@ public:
                         ascending();
                 }
                 if(flightState == ASCENDING && apogeeDectect()){
-                        //motor ejection
+                        tvc.ejection();
                         //flap deployment
                         flightState = DESCENDING;
                 }
@@ -531,6 +569,7 @@ public:
                 X08_Y.write(YservoVal);// real servo output
 
         }
+        
         bool apogeeDectect(){
 
         }
@@ -569,32 +608,13 @@ public:
         }
 };
 
-IMU imu;
-BMP280 bmp280;
 
-LED led;
-
-Buzzer buzzer;
-PYRO pyro;
 FlightCtrl FlightControl;
 
 void setup(){
-
-        //PID Configuration
-        
-
         Serial.begin(115200);
-        imu.init();
-        Wire.begin();
-        bmp280.init();
-        tvc.servo_init();
-        tvc.X80_testX();
-        tvc.X80_testY();
-        tvc.X80_test();
-        //led.init();
-        //led.initIndicator();
-        //buzzer.init();
-        //buzzer.initIndicator();
+        
+        
         if (!SD.begin(chipSelect)) {
         //Serial.println("error");
         return;
