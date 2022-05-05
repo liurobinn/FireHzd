@@ -492,7 +492,7 @@ public:
 
                 imu.update();
                 imu.updateAcc();
-                
+
                 if(flightState == GROUND) {
                         imu.init();
                         Wire.begin();
@@ -518,11 +518,10 @@ public:
                         flightState = DESCENDING;
                 }
                 if(flightState == DESCENDING){
+                        //calculate when to fire based on thrust curve and altitude. BIG BRAIN MOMENT
                         descending();
                 }
 
-                //update flight state
-                //do pid stuff
         }
 
         bool launchDetect(){
@@ -606,8 +605,6 @@ public:
                 }else{
                         return false;
                 }
-                //detect apogee through the accelerometer and the barometer 
-                //motor ejection
         }
 };
 
