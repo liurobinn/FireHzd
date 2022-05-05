@@ -490,6 +490,9 @@ public:
 
         void update() {
 
+                imu.update();
+                imu.updateAcc();
+                
                 if(flightState == GROUND) {
                         imu.init();
                         Wire.begin();
@@ -643,8 +646,7 @@ void setup(){
 
 void loop() {
 
-        imu.update();
-        imu.updateAcc();
+        
 
         
   
