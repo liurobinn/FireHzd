@@ -464,11 +464,11 @@ void setup(){
         //PID Configuration
         xPID.p = 0.5;
         xPID.i = 0.001;
-        xPID.d = 0.1;
+        xPID.d = 0.01;
 
         yPID.p = 0.5;
         yPID.i = 0.001;
-        yPID.d = 0.1;
+        yPID.d = 0.01;
 
         Serial.begin(115200);
         imu.init();
