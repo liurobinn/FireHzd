@@ -12,7 +12,7 @@ MPU6050 mpu;
 File myFile;
 
 GPotential getEnergy;
-double  ALTITUDE;
+double  ALTITUDE;//store the barometer value
 #define MASS 1 //in kg 
 
 
