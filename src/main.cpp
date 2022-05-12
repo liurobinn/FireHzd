@@ -6,9 +6,15 @@
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
+#include <GPotential.h>
 
 MPU6050 mpu;
 File myFile;
+
+GPotential getEnergy;
+double  ALTITUDE;
+#define MASS 1 //in kg 
+
 
 double offsetX=7; //TVC Mount Offsets X
 double offsetY=0; //TVC Mount Offsets Y
@@ -563,6 +569,7 @@ bool baroApogee(){
                 last_dP= bmp.readAltitude(1028.44) - lastBaro;
                 lastBaro= bmp.readAltitude(1028.44);
                 lastSign= last_dP/abs(last_dP);
+                delay(100);
         }
         return Apogee;
 }
@@ -667,9 +674,7 @@ Barometer Baro;
 
 void setup(){
         Serial.begin(115200);
-        FlightControl
-
-
+        FlightControl.init();
 }
 void loop() {
 FlightControl.update();
