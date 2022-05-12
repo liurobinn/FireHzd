@@ -22,6 +22,8 @@ volatile bool mpuInterrupt = false;
 
 double pos;
 
+Adafruit_BMP280 bmp;
+
 int16_t ax, ay, az;
 
 Servo X08_X;
@@ -35,7 +37,7 @@ float euler[3];
 float ypr[3];
 
 const int chipSelect = BUILTIN_SDCARD;
-Adafruit_BMP280 bmp;
+
 
 bool MotorOne= false;
 bool MotorTwo= false;
@@ -392,22 +394,6 @@ void initIndicator(){
         delay(200);
         digitalWrite(10,LOW);
         delay(200);
-        digitalWrite(10,HIGH);
-        delay(200);
-        digitalWrite(10,LOW);
-        delay(200);
-        digitalWrite(10,HIGH);
-        delay(200);
-        digitalWrite(10,LOW);
-        delay(200);
-        digitalWrite(10,HIGH);
-        delay(200);
-        digitalWrite(10,LOW);
-        delay(200);
-        digitalWrite(10,HIGH);
-        delay(200);
-        digitalWrite(10,LOW);
-        delay(200);
 }
 };
 
@@ -456,7 +442,6 @@ void flapDep(){
 };
 
 class FlightCtrl {
-
 public:
 PYRO pyro;
 PID xPID;
@@ -475,22 +460,21 @@ const int APOGEE = 3;
 const int DESCENDING = 4;
 
 int flightState = GROUND;
-
+void init(){
+        imu.init();
+        Wire.begin();
+        baro.init();
+        tvc.servo_init();
+        led.init();
+        led.initIndicator();
+        buzzer.init();
+        buzzer.initIndicator();
+}
 void update() {
 
         imu.update();
         imu.updateAcc();
 
-        if(flightState == GROUND) {
-                imu.init();
-                Wire.begin();
-                bmp.init();
-                tvc.servo_init();
-                led.init();
-                led.initIndicator();
-                buzzer.init();
-                buzzer.initIndicator();
-        }
         if(flightState == LAUNCH && launchDetect()) {
                 flightState = ASCENDING;
         }
@@ -683,9 +667,7 @@ Barometer Baro;
 
 void setup(){
         Serial.begin(115200);
-        Imu.init();
-        TVC.servo_init();
-        Baro.init();
+        FlightControl
 
 
 }
