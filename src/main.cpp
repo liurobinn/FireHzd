@@ -14,6 +14,14 @@ double pitch;
 double roll;
 double yaw;
 
+const int GROUND = 0;
+const int LAUNCH = 1;
+const int ASCENDING = 2;
+const int APOGEE = 3;
+const int DESCENDING = 4;
+int flightState = GROUND;
+
+
 int16_t ax, ay, az;
 
 double  ALTITUDE;//store the barometer value
@@ -154,7 +162,7 @@ class PYRO {
 private:
         bool MotorOne= false;
 public:
-
+        bool MotorTwo= false;
         void INIT(){
                 pinMode(5,OUTPUT);//Pyro 1
                 pinMode(6,OUTPUT);//Pyro 2
@@ -162,21 +170,23 @@ public:
                 pinMode(8,OUTPUT);//Pyro 4
         }
 
-        bool ASCENDING_IGNITION(){
+        void ASCENDING_IGNITION(){
                 digitalWrite(7,HIGH);
                 delay(2000);
                 digitalWrite(7,LOW);
                 delay(2000);
 
-                MotorOne=true;
-
-                return MotorOne;
+                flightState=LAUNCH;
         }
-        void DSCENDING_IGNITION(){
+        bool DSCENDING_IGNITION(){
                 digitalWrite(8,HIGH);
                 delay(2000);
                 digitalWrite(8,LOW);
                 delay(2000);
+
+                MotorTwo=true;
+
+                return MotorTwo;
         }
         void FLAP_DEPLOY(){
                 digitalWrite(5,HIGH);
@@ -259,6 +269,7 @@ mpuInterrupt = true;
 
 class IMU {
 private:
+        #define OUTPUT_READABLE_WORLDACCEL
         #define OUTPUT_READABLE_YAWPITCHROLL
         #define INTERRUPT_PIN 2
         #define LED_PIN 13
@@ -286,6 +297,7 @@ private:
         double prev;
 
 public:
+        double RWAcc;
         void INIT(){
                 // join I2C bus (I2Cdev library doesn't do this automatically)
                 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -408,6 +420,27 @@ public:
                         //Serial.println(roll);
                 #endif
 
+                #ifdef OUTPUT_READABLE_WORLDACCEL
+                // display initial world-frame acceleration, adjusted to remove gravity
+                // and rotated based on known orientation from quaternion
+                mpu.dmpGetQuaternion(&q, fifoBuffer);
+                mpu.dmpGetAccel(&aa, fifoBuffer);
+                mpu.dmpGetGravity(&gravity, &q);
+                mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+                mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+                RWAcc=sqrt(aaWorld.x*aaWorld.x+aaWorld.y*aaWorld.y+aaWorld.z*aaWorld.z);//stationary is around 0~50
+                //Serial.println(RWAcc);
+                /*
+                Serial.print("aworld\t");
+                Serial.print(aaWorld.x);
+                Serial.print("\t");
+                Serial.print(aaWorld.y);
+                Serial.print("\t");
+                Serial.println(aaWorld.z);
+                */
+                #endif
+
+
                         blinkState = !blinkState;
                         digitalWrite(LED_PIN, blinkState);
                 }
@@ -426,6 +459,7 @@ public:
 double processTime = micros()/1000000.000;
 
 class SD_CARD{
+
 private:
         File myFile;
         const int chipSelect = BUILTIN_SDCARD;
@@ -470,14 +504,48 @@ void write(){
 }
 };
 
+class  COUNTDOWN {
+public:
+        void startIndicator(){
+                digitalWrite(10,HIGH);
+                delay(1000);
+                digitalWrite(10,LOW);
+                delay(1000);
+                digitalWrite(10,HIGH);
+                delay(1000);
+                digitalWrite(10,LOW);
+                delay(1000);
+        }
+        void countdown(){
+                int i=1;
+                int counter;
+                for(counter=1; counter >0; counter--) {
+                        for (i=1; i<=counter; i++) {
+                                digitalWrite(10,HIGH);
+                                digitalWrite(14,LOW);
+                                delay(200);
+                                digitalWrite(10,LOW);
+                                digitalWrite(14,HIGH);
+                                delay(200);
+                        }
+                        digitalWrite(10,LOW);
+                        digitalWrite(14,HIGH);
+                        delay(10000);
+                }
+                int finalCount;
+                for (finalCount=0; finalCount <= 10; finalCount++){
+                digitalWrite(10,HIGH);
+                digitalWrite(14,LOW);
+                delay(500);
+                digitalWrite(10,LOW);
+                digitalWrite(14,HIGH);
+                delay(500);
+              }
+        }
+};
+
 class FlightCtrl {
 private:
-        double lastBaro;
-        double last_dP; //change in pressure
-        int lastSign;
-        double dP;
-        int sign;
-        bool Apogee= false;
         THRUST_VECTOR_CONTROL TVC;
         IMU mpu6050;
         BAROMETER baro;
@@ -485,16 +553,12 @@ private:
         GPotential Ep;
         BUZZER buzzer;
         LED led;
+        COUNTDOWN countdown;
         
 
 public:
-        const int GROUND = 0;
-        const int LAUNCH = 1;
-        const int ASCENDING = 2;
-        const int APOGEE = 3;
-        const int DESCENDING = 4;
-        int flightState = GROUND;
-
+double apogee;
+double liftoffTime;
         void INIT(){
                 mpu6050.INIT();
                 Wire.begin();
@@ -502,17 +566,10 @@ public:
                 TVC.SERVO_INIT();
                 buzzer.INIT();
                 led.INIT();
-                for(int q=6; q<=1; q--){
-                        for(int p=q; p<=1; p--){
-                                digitalWrite(10, HIGH);
-                                digitalWrite(14, LOW);
-                                delay(500);
-                                digitalWrite(10, LOW);
-                                digitalWrite(14, HIGH);
-                                delay(500);
-                        }
-                        delay(10000);
-                }
+                //countdown.startIndicator();
+                //countdown.countdown();
+                pyro.ASCENDING_IGNITION();
+                liftoffTime=micros()/1000000.000;
                 
         }
         void MAIN() {
@@ -520,69 +577,35 @@ public:
                 mpu6050.UPDATE();
                 mpu6050.ACC_UPDATE();
 
-                if(flightState == LAUNCH && LAUNCH_DETECT()) {
+                if(flightState == LAUNCH) {
                         flightState = ASCENDING;
-                }
-                if(flightState == ASCENDING) {
+                        Serial.println(flightState); 
+                }else if(flightState == ASCENDING) {
                         TVC.ASCENDING();
+                        Serial.println(mpu6050.RWAcc);
+                        if(mpu6050.RWAcc<=100){
+                                flightState=APOGEE;
+                                //get alititude
+                        }
                 }
-                if(flightState == ASCENDING && APOGEE_DETECT()) {
+                else if(flightState == APOGEE) {
                         TVC.MOTOR_EJECTION();
+                        digitalWrite(10,HIGH);
+                        delay(50);
+                        digitalWrite(10,LOW);
+                        delay(50);
                         //flap deployment
                         flightState = DESCENDING;
-                }
-                if(flightState == DESCENDING) {
+                        Serial.println(flightState);
+                }else if(flightState == DESCENDING){
+
                         if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) == E16){
                                 pyro.DSCENDING_IGNITION();
-                                TVC.DESCENDING();
-                        }
-                        
-                        
+                        }   
+                        TVC.DESCENDING();       
+                        Serial.println(flightState); 
                 }
 
-        }
-
-        bool LAUNCH_DETECT(){
-                if(pyro.ASCENDING_IGNITION() == true /*&& gravitational accleration*/ ) {
-                        //add led?
-                        flightState = LAUNCH;
-                        return true;
-                }else{
-                        return false;
-                }
-                //check accelerometer for spike
-                //return true if launched
-        }
-
-        bool APOGEE_DETECT(){
-                //need to work on acc
-                //need to combine with baroApogee
-                }
-        bool BARO_APOGEE(){
-                for (int p=0; p <= 10; p++) {
-                        dP= baro.UPDATE_ALTITUDE()- lastBaro;
-                        sign= dP/abs(dP);
-
-                                if(lastSign+sign == 1) {
-                                        Apogee= true;
-                                return true;
-                                }
-
-                        last_dP= baro.UPDATE_ALTITUDE() - lastBaro;
-                        lastBaro= baro.UPDATE_ALTITUDE();
-                        lastSign= last_dP/abs(last_dP);
-                        delay(100);
-                }
-        return Apogee;
-        }
-
-        bool apogee(){
-                if(BARO_APOGEE() == true) {
-                        //maybe add the acclerometer data? Idk
-                        return true;
-                }else{
-                        return false;
-                }
         }
 };
 
@@ -596,6 +619,9 @@ void setup(){
 }
 
 void loop() {
+        if(micros()/1000000.000-FlightControl.liftoffTime<=4){
+                flightState=ASCENDING;
+        }
         FlightControl.MAIN();
         //sd.write();
 }
