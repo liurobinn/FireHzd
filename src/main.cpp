@@ -533,7 +533,7 @@ public:
                 }
                 if(flightState == DESCENDING) {
                         if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) == E16){
-                                pyro.
+                                pyro.DSCENDING_IGNITION();
                                 TVC.DESCENDING();
                         }
                         
