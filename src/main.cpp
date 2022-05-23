@@ -8,8 +8,8 @@
 #include <SPI.h>
 #include <GPotential.h>
 
-#define MASS 1 //in kg
-#define E16 27853
+double MASS = 1; //in kg
+double E16 = 27853;
 double pitch;
 double roll;
 double yaw;
@@ -17,8 +17,9 @@ double yaw;
 const int GROUND = 0;
 const int LAUNCH = 1;
 const int ASCENDING = 2;
-const int APOGEE = 3;
-const int DESCENDING = 4;
+const int PWRLSASCENDING= 3;
+const int APOGEE = 4;
+const int DESCENDING = 5;
 int flightState = GROUND;
 
 
@@ -103,9 +104,6 @@ public:
         }
 
         void MOTOR_EJECTION(){ //needs some work done
-
-        delay(3000);
-
         for (pos=90+offsetY; pos >= 30 +offsetY; pos -= 1) {
 
                 X08_Y.write(pos);
@@ -118,7 +116,6 @@ public:
                 X08_Y.write(pos);
                 delay(1);
         }
-        delay(40);
         }
 
         void ASCENDING(){
@@ -192,7 +189,7 @@ public:
                 digitalWrite(5,HIGH);
                 delay(10000);
                 digitalWrite(5,LOW);
-                delay(10000);
+                delay(10);
         }
 };
 
@@ -216,7 +213,7 @@ class BAROMETER {
 private:
         Adafruit_BMP280 BMP280;
 public:
-        int LAUNCHALTITUDE; 
+double LAUNCHALTITUDE;
         void INIT(){
 
                 if (!BMP280.begin()) {
@@ -554,6 +551,10 @@ private:
         BUZZER buzzer;
         LED led;
         COUNTDOWN countdown;
+        bool block1 = true;
+        bool block2 = true;
+        bool block3 = true;
+        bool block4 = true;
         
 
 public:
@@ -577,33 +578,45 @@ double liftoffTime;
                 mpu6050.UPDATE();
                 mpu6050.ACC_UPDATE();
 
-                if(flightState == LAUNCH) {
+                if(flightState == LAUNCH && block3) {
                         flightState = ASCENDING;
-                        Serial.println(flightState); 
-                }else if(flightState == ASCENDING) {
+                        block3 = false;
+                        Serial.println("LAUNCH"); 
+                }else if(flightState == ASCENDING && block4) {
                         TVC.ASCENDING();
                         Serial.println(mpu6050.RWAcc);
-                        if(mpu6050.RWAcc<=100){
+                        Serial.println("ASCENDING");
+                        flightState=PWRLSASCENDING;
+                        
+                }else if(flightState == PWRLSASCENDING && block1){
+                        Serial.println(mpu6050.RWAcc);
+                        if(mpu6050.RWAcc<=150){
+                                apogee = baro.UPDATE_ALTITUDE();
                                 flightState=APOGEE;
-                                //get alititude
+                                block1 = false;
                         }
-                }
-                else if(flightState == APOGEE) {
-                        TVC.MOTOR_EJECTION();
+                        Serial.println("PWRLSASCENDING");
+                }else if(flightState == APOGEE && block2) {
                         digitalWrite(10,HIGH);
                         delay(50);
                         digitalWrite(10,LOW);
                         delay(50);
-                        //flap deployment
+                        TVC.MOTOR_EJECTION();
+                        pyro.FLAP_DEPLOY();
+                        digitalWrite(10,HIGH);
+                        delay(50);
+                        digitalWrite(10,LOW);
+                        delay(50);
                         flightState = DESCENDING;
-                        Serial.println(flightState);
+                        block2 = false;
+                        Serial.println("APOGEE");
                 }else if(flightState == DESCENDING){
 
-                        if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) == E16){
+                        if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) - E16 == 50){//give of margin of error
                                 pyro.DSCENDING_IGNITION();
                         }   
                         TVC.DESCENDING();       
-                        Serial.println(flightState); 
+                        Serial.println("DESCENDING"); 
                 }
 
         }
