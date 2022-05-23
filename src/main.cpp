@@ -187,7 +187,7 @@ public:
         }
         void FLAP_DEPLOY(){
                 digitalWrite(5,HIGH);
-                delay(10000);
+                delay(5000);
                 digitalWrite(5,LOW);
                 delay(10);
         }
