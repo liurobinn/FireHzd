@@ -11,7 +11,7 @@ Software for the Flight Computer ```V6.0 APOGEE```. Also compatable with ```V4.0
 
 # Releases
 
-- **0.0.1- first official pre-release of FireHzd flight software**
+- **1.0.0- first official pre-release of FireHzd flight software**
 
 # Attention
 ```FireHzd``` is not certified for use in safety-critical applications. It should not be used in any life risking applications.
