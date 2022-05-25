@@ -56,7 +56,7 @@ class THRUST_VECTOR_CONTROL {
 private:
         double pos;
 
-        double offsetX=7; //TVC Mount Offsets X
+        double offsetX=4; //TVC Mount Offsets X
         double offsetY=0; //TVC Mount Offsets Y
 
         double XservoVal;
@@ -104,14 +104,16 @@ public:
         }
 
         void MOTOR_EJECTION(){ //needs some work done
-        for (pos=90+offsetY; pos >= 30 +offsetY; pos -= 1) {
+        X08_X.write(90+offsetX);
+        X08_Y.write(90+offsetY);
+        for (pos=90+offsetY; pos >= 65 +offsetY; pos -= 1) {
 
                 X08_Y.write(pos);
-                delay(5);
+                delay(3);
         }
-        delay(30);
+        delay(10);
 
-        for (pos=30+offsetY; pos <= 90 +offsetY; pos += 1) {
+        for (pos=65+offsetY; pos <= 90 +offsetY; pos += 1) {
 
                 X08_Y.write(pos);
                 delay(1);
@@ -555,6 +557,8 @@ private:
         bool block2 = true;
         bool block3 = true;
         bool block4 = true;
+        bool block5 = true;
+        bool block6 = true;
         
 
 public:
@@ -612,9 +616,15 @@ double liftoffTime;
                         Serial.println("APOGEE");
                 }else if(flightState == DESCENDING){
 
-                        if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) - E16 == 50){//give of margin of error
+                        if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) - E16 == 50, block6){//give of margin of error
                                 pyro.DSCENDING_IGNITION();
-                        }   
+                                block6 = false;
+                                block5 = false;
+                        }else if(Ep.GetPotentialEnergy(apogee, MASS)<E16,block5){
+                                block5 = false;
+                                pyro.DSCENDING_IGNITION();
+                        }
+                        //if the potential energy is below the energy that E16 produces, fire the motor immediately
                         TVC.DESCENDING();       
                         Serial.println("DESCENDING"); 
                 }
