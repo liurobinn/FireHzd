@@ -159,6 +159,10 @@ public:
 
 class PYRO {
 private:
+        int pyro1= 5;
+        int pyro2= 6;
+        int pyro3= 7;
+        int pyro4= 8;
         bool MotorOne= false;
 public:
         bool MotorTwo= false;
@@ -170,28 +174,28 @@ public:
         }
 
         void ASCENDING_IGNITION(){
-                digitalWrite(7,HIGH);
-                delay(2000);
-                digitalWrite(7,LOW);
-                delay(2000);
+                digitalWrite(pyro3,HIGH);
+                delay(500);
+                digitalWrite(pyro3,LOW);
+                delay(5);
 
                 flightState=LAUNCH;
         }
         bool DSCENDING_IGNITION(){
-                digitalWrite(8,HIGH);
-                delay(2000);
-                digitalWrite(8,LOW);
-                delay(2000);
+                digitalWrite(pyro4,HIGH);
+                delay(500);
+                digitalWrite(pyro4,LOW);
+                delay(5);
 
                 MotorTwo=true;
 
                 return MotorTwo;
         }
         void FLAP_DEPLOY(){
-                digitalWrite(5,HIGH);
-                delay(5000);
-                digitalWrite(5,LOW);
-                delay(10);
+                digitalWrite(pyro1,HIGH);
+                delay(450);
+                digitalWrite(pyro1,LOW);
+                delay(5);
         }
 };
 
@@ -201,6 +205,10 @@ public:
                 pinMode(14, OUTPUT);//R
                 pinMode(15, OUTPUT);//G
                 pinMode(16, OUTPUT);//B
+
+                digitalWrite(14, HIGH);
+                digitalWrite(15, HIGH);
+                digitalWrite(16, HIGH);
         }
 };
 
@@ -518,7 +526,7 @@ public:
         void countdown(){
                 int i=1;
                 int counter;
-                for(counter=1; counter >0; counter--) {
+                for(counter=3; counter >0; counter--) {
                         for (i=1; i<=counter; i++) {
                                 digitalWrite(10,HIGH);
                                 digitalWrite(14,LOW);
@@ -571,8 +579,8 @@ double liftoffTime;
                 TVC.SERVO_INIT();
                 buzzer.INIT();
                 led.INIT();
-                //countdown.startIndicator();
-                //countdown.countdown();
+                countdown.startIndicator();
+                countdown.countdown();
                 pyro.ASCENDING_IGNITION();
                 liftoffTime=micros()/1000000.000;
                 
@@ -585,21 +593,21 @@ double liftoffTime;
                 if(flightState == LAUNCH && block3) {
                         flightState = ASCENDING;
                         block3 = false;
-                        Serial.println("LAUNCH"); 
+                        //Serial.println("LAUNCH"); 
                 }else if(flightState == ASCENDING && block4) {
                         TVC.ASCENDING();
                         Serial.println(mpu6050.RWAcc);
-                        Serial.println("ASCENDING");
+                        //Serial.println("ASCENDING");
                         flightState=PWRLSASCENDING;
                         
                 }else if(flightState == PWRLSASCENDING && block1){
-                        Serial.println(mpu6050.RWAcc);
-                        if(mpu6050.RWAcc<=150){
+                        //Serial.println(mpu6050.RWAcc);
+                        if(mpu6050.RWAcc<=300){
                                 apogee = baro.UPDATE_ALTITUDE();
                                 flightState=APOGEE;
                                 block1 = false;
                         }
-                        Serial.println("PWRLSASCENDING");
+                        //Serial.println("PWRLSASCENDING");
                 }else if(flightState == APOGEE && block2) {
                         digitalWrite(10,HIGH);
                         delay(50);
@@ -613,7 +621,7 @@ double liftoffTime;
                         delay(50);
                         flightState = DESCENDING;
                         block2 = false;
-                        Serial.println("APOGEE");
+                        //Serial.println("APOGEE");
                 }else if(flightState == DESCENDING){
 
                         if(Ep.GetPotentialEnergy(baro.UPDATE_ALTITUDE()-baro.LAUNCHALTITUDE, MASS) - E16 == 50, block6){//give of margin of error
@@ -626,12 +634,26 @@ double liftoffTime;
                         }
                         //if the potential energy is below the energy that E16 produces, fire the motor immediately
                         TVC.DESCENDING();       
-                        Serial.println("DESCENDING"); 
+                        //Serial.println("DESCENDING"); 
                 }
 
         }
 };
 
+bool launched= false;
+bool launchedBlock = true;// make sure it doesnt trigger the launch code after the launch
+bool launchDetection(){
+        if(launchedBlock){
+                if(az>1.1){//might need changes, I forgot which axis
+                launched = true;
+                pinMode(10, HIGH);
+                delay(50);
+                pinMode(10, LOW);
+                launchedBlock = false;
+                }
+                return launched;
+        }
+}
 
 FlightCtrl FlightControl;
 SD_CARD sd;
@@ -639,12 +661,19 @@ SD_CARD sd;
 void setup(){
         Serial.begin(115200);
         FlightControl.INIT();
+        sd.INIT();
 }
 
 void loop() {
-        if(micros()/1000000.000-FlightControl.liftoffTime<=4){
+
+        if(! launchDetection() && launchedBlock){
+
+        }
+        else{
+                if(micros()/1000000.000-FlightControl.liftoffTime<=4){
                 flightState=ASCENDING;
         }
         FlightControl.MAIN();
-        //sd.write();
+        sd.write();
+        }
 }
