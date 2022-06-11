@@ -1,5 +1,5 @@
 # FireHzd
-Software for the Flight Computer ```V6.0 APOGEE```. Also compatable with ```V4.0 Big Brain``` and ```V5.0 I Love Gravity```
+Arduino based software for Flight Computer ```V6.0 APOGEE```. Also compatable with ```V4.0 Big Brain``` and ```V5.0 I Love Gravity```
 # Include 
 1. ```DMP``` output based on ```DMP6``` example code by Jeff Rowberg
 2. ```BMP280``` output based on SparkFun examples.
