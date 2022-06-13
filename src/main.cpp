@@ -56,7 +56,7 @@ class THRUST_VECTOR_CONTROL {
 private:
         double pos;
 
-        double offsetX=-2; //TVC Mount Offsets X
+        double offsetX=-4; //TVC Mount Offsets X
         double offsetY=-4; //TVC Mount Offsets Y
 
         double XservoVal;
@@ -106,14 +106,14 @@ public:
         void MOTOR_EJECTION(){ //needs some work done
         X08_X.write(90+offsetX);
         X08_Y.write(90+offsetY);
-        for (pos=90+offsetX; pos <= 125 +offsetX; pos ++) {
+        for (pos=90+offsetX; pos <= 135 +offsetX; pos ++) {
 
                 X08_X.write(pos);
                 delay(2);
         }
         delay(10);
 
-        for (pos=125+offsetX; pos >= 90 +offsetX; pos --) {
+        for (pos=135+offsetX; pos >= 90 +offsetX; pos --) {
 
                 X08_X.write(pos);
                 delay(1);
@@ -123,26 +123,26 @@ public:
         void ASCENDING(){
                 xPID.p = 0.5;
                 xPID.i = 0.001;
-                xPID.d = 0.01;
+                xPID.d = 0.1;
 
                 yPID.p = 0.5;
-                yPID.i = 0.001;
-                yPID.d = 0.01;
+                yPID.i = 0.2;
+                yPID.d = 0.1;
 
                 XservoVal= xPID.UPDATE(roll-90)+90+offsetX;
                 YservoVal= yPID.UPDATE(pitch-90)+90+offsetY;
 
                 X08_X.write(XservoVal);        // real servo output
-                X08_Y.write(YservoVal);        // real servo output
+                X08_Y.write(YservoVal-2);        // real servo output
         }
         void DESCENDING(){
-                xPID.p = 0.3;
+                xPID.p = 0.5;
                 xPID.i = 0.001;
-                xPID.d = 0.001;
+                xPID.d = 0.1;
 
-                yPID.p = 0.3;
+                yPID.p = 0.5;
                 yPID.i = 0.001;
-                yPID.d = 0.001;
+                yPID.d = 0.1;
 
                 //altitude processing
                 //acceleration
@@ -152,7 +152,10 @@ public:
                 YservoVal= yPID.UPDATE(pitch-90)+90+offsetY;
 
                 X08_X.write(XservoVal);        // real servo output
-                X08_Y.write(YservoVal);        // real servo output
+                X08_Y.write(YservoVal-2);        // real servo output
+                Serial.print(xPID.UPDATE(roll-90)); Serial.print("\t");     // real servo output
+                Serial.println(yPID.UPDATE(pitch-90)-2);        // real servo output
+
 
         }
 };
@@ -176,8 +179,13 @@ double ignitionTime;
 
         void ASCENDING_IGNITION(){
                 digitalWrite(pyro3,HIGH);
-                delay(700);
+                delay(300);
                 digitalWrite(pyro3,LOW);
+                delay(1);
+
+                digitalWrite(10,HIGH);
+                delay(10);
+                digitalWrite(10,LOW);
                 delay(1);
 
 
@@ -473,14 +481,14 @@ class SD_CARD{
 private:
         File myFile;
         const int chipSelect = BUILTIN_SDCARD;
-        Adafruit_BMP280 bmp280;
+        BAROMETER BMP_BARO;
 public:
         void INIT(){
                 if (!SD.begin(chipSelect)) {
                 //Serial.println("error");
                 return;
                 }
-                myFile = SD.open("TVC_test.csv", FILE_WRITE);
+                myFile = SD.open("Flight3.csv", FILE_WRITE);
                 myFile.print("Time (s)"); myFile.print("\t");
 
                 myFile.print("Rotation X (deg)"); myFile.print("\t");
@@ -492,15 +500,12 @@ public:
                 myFile.print("Accel Z (g)"); myFile.print("\t");
 
                 myFile.print("Altitude (ft)"); myFile.print("\t");
-                myFile.print("Temp (F)"); myFile.print("\t");
-                myFile.print("Humidity"); myFile.print("\t");
-                myFile.println("Pressure");
                 myFile.close();          
 
 }
 
 void write(){
-        myFile = SD.open("TVC_test.csv", FILE_WRITE);
+        myFile = SD.open("Flight3.csv", FILE_WRITE);
         myFile.print(micros()/1000000.000-processTime); myFile.print("\t");
         myFile.print(roll-90); myFile.print("\t");
         myFile.print(pitch-90); myFile.print("\t");
@@ -509,6 +514,8 @@ void write(){
         myFile.print(-az/16384.00); myFile.print("\t");
         myFile.print(-ay/16384.00); myFile.print("\t");
         myFile.print(-ax/16384.00); myFile.print("\t");
+
+        myFile.println(BMP_BARO.UPDATE_ALTITUDE());
         myFile.close();
 
 }
@@ -529,7 +536,7 @@ public:
         void countdown(){
                 int i=1;
                 int counter;
-                for(counter=6; counter >0; counter--) {
+                for(counter=1; counter >0; counter--) {
                         for (i=1; i<=counter; i++) {
                                 digitalWrite(10,HIGH);
                                 digitalWrite(15,LOW);
@@ -543,7 +550,7 @@ public:
                         delay(10000);
                 }
                 int finalCount;
-                for (finalCount=0; finalCount <= 10; finalCount++){
+                for (finalCount=0; finalCount <= 5; finalCount++){
                 digitalWrite(10,HIGH);
                 digitalWrite(15,LOW);
                 delay(500);
@@ -570,6 +577,7 @@ private:
         bool block4 = true;
         bool block5 = true;
         bool block6 = true;
+        double realAcc = sqrt(ax*ax+ay*ay+az*az);
         
 
 public:
@@ -584,8 +592,7 @@ double liftoffTime;
                 led.INIT();
                 countdown.startIndicator();
                 countdown.countdown();
-                pyro.ASCENDING_IGNITION();
-                
+                pyro.ASCENDING_IGNITION();    
         }
         void Acc_UPDATE(){
                 mpu6050.UPDATE();
@@ -608,7 +615,7 @@ double liftoffTime;
                         
                 }else if(flightState == PWRLSASCENDING && block1){
                         //Serial.println(mpu6050.RWAcc);
-                        if(mpu6050.RWAcc<=400){
+                        if(realAcc=1.0){
                                 apogee = baro.UPDATE_ALTITUDE();
                                 flightState=APOGEE;
                                 block1 = false;
@@ -670,8 +677,8 @@ bool launchDetection(){
 
 void setup(){
         Serial.begin(115200);
-        FlightControl.INIT();
         sd.INIT();
+        FlightControl.INIT();
 }
 
 void loop() {
@@ -687,9 +694,11 @@ if(! launchDetection() && launchedBlock){
         Serial.println(launchedBlock);
 
 }else{
-        if(micros()/1000000.000-FlightControl.liftoffTime<=4){
+
+        if(micros()/1000000.000-FlightControl.liftoffTime<=3){
                 flightState=ASCENDING;
         }
+
         FlightControl.MAIN();
         sd.write();
         Serial.println(ay/16384.00);
