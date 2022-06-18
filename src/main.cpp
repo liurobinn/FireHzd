@@ -481,7 +481,7 @@ class SD_CARD{
 private:
         File myFile;
         const int chipSelect = BUILTIN_SDCARD;
-        BAROMETER BMP_BARO;
+        Adafruit_BMP280 BMP_BARO;
 public:
         void INIT(){
                 if (!SD.begin(chipSelect)) {
@@ -515,7 +515,7 @@ void write(){
         myFile.print(-ay/16384.00); myFile.print("\t");
         myFile.print(-ax/16384.00); myFile.print("\t");
 
-        myFile.println(BMP_BARO.UPDATE_ALTITUDE());
+        myFile.println(BMP_BARO.readAltitude(1013.25));
         myFile.close();
 
 }
@@ -536,7 +536,7 @@ public:
         void countdown(){
                 int i=1;
                 int counter;
-                for(counter=1; counter >0; counter--) {
+                for(counter=9; counter >1; counter--) {
                         for (i=1; i<=counter; i++) {
                                 digitalWrite(10,HIGH);
                                 digitalWrite(15,LOW);
@@ -550,7 +550,7 @@ public:
                         delay(10000);
                 }
                 int finalCount;
-                for (finalCount=0; finalCount <= 5; finalCount++){
+                for (finalCount=0; finalCount <= 10; finalCount++){
                 digitalWrite(10,HIGH);
                 digitalWrite(15,LOW);
                 delay(500);
@@ -604,20 +604,20 @@ double liftoffTime;
                 mpu6050.ACC_UPDATE();
 
                 if(flightState == LAUNCH && block3) {
-                        flightState = ASCENDING;
+                        flightState ++;
                         block3 = false;
                         //Serial.println("LAUNCH"); 
                 }else if(flightState == ASCENDING && block4) {
                         TVC.ASCENDING();
                         Serial.println(mpu6050.RWAcc);
                         //Serial.println("ASCENDING");
-                        flightState=PWRLSASCENDING;
+                        flightState ++;
                         
                 }else if(flightState == PWRLSASCENDING && block1){
                         //Serial.println(mpu6050.RWAcc);
                         if(realAcc=1.0){
                                 apogee = baro.UPDATE_ALTITUDE();
-                                flightState=APOGEE;
+                                flightState ++;
                                 block1 = false;
                         }
                         //Serial.println("PWRLSASCENDING");
@@ -632,7 +632,7 @@ double liftoffTime;
                         delay(50);
                         digitalWrite(10,LOW);
                         delay(50);
-                        flightState = DESCENDING;
+                        flightState ++;
                         block2 = false;
                         //Serial.println("APOGEE");
                 }else if(flightState == DESCENDING){
@@ -662,7 +662,7 @@ bool launchedBlock = true;// make sure it doesnt trigger the launch code after t
 bool terminator = false;
 bool launchDetection(){
         if(launchedBlock){
-                if((abs(ay/16384.00))>1.2){//might need changes, I forgot which axis
+                if((abs(ay/16384.00))>1.1){//might need changes, I forgot which axis
                 launched = true;
                 pinMode(15, LOW);
                 delay(50);
@@ -677,8 +677,8 @@ bool launchDetection(){
 
 void setup(){
         Serial.begin(115200);
-        sd.INIT();
         FlightControl.INIT();
+        sd.INIT();
 }
 
 void loop() {
