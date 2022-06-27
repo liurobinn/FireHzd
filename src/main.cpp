@@ -707,3 +707,9 @@ if(! launchDetection() && launchedBlock){
 
      }
 }
+/*
+TO DO:
+1. PID
+2. Apogee detection !!!!!! Ask for help
+3. Simplified the code
+*/
