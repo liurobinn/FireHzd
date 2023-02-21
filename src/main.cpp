@@ -317,13 +317,13 @@ private:
 public:
         double RWAcc;
         void INIT(){
-                // join I2C bus (I2Cdev library doesn't do this automatically)
-                #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-                Wire.begin();
-                Wire.setClock(400000);         // 400kHz I2C clock. Comment this line if having compilation difficulties
-                #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+        // join I2C bus (I2Cdev library doesn't do this automatically)
+        #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+        Wire.begin();
+        Wire.setClock(400000);         // 400kHz I2C clock. Comment this line if having compilation difficulties
+        #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
         Fastwire::setup(400, true);
-          #endif
+        #endif
         mpu.initialize();
         pinMode(INTERRUPT_PIN, INPUT);
 
@@ -466,11 +466,11 @@ public:
 
         void ACC_UPDATE(){
                 mpu.getAcceleration(&ax, &ay, &az);
-                /*
+                
                        Serial.print(ax/16384.00); Serial.print("\t");
                        Serial.print(ay/16384.00); Serial.print("\t");
                        Serial.print(az/16384.00); Serial.print("\t");
-                */
+                
         }
 };
 
@@ -588,10 +588,10 @@ double liftoffTime;
                 Wire.begin();
                 baro.INIT();
                 TVC.SERVO_INIT();
-                buzzer.INIT();
+                //buzzer.INIT();
                 led.INIT();
-                countdown.startIndicator();
-                countdown.countdown();
+                //countdown.startIndicator();
+                //countdown.countdown();
                 pyro.ASCENDING_IGNITION();    
         }
         void Acc_UPDATE(){
