@@ -88,6 +88,8 @@ public:
 
                 pos= 90 + offsetX;
 
+                Serial.println("Robin Liu");
+
         //rotation test
         for (t=0; t>= 0 && t <=1440; t++) {
                 roll=asin(0.05*cos((3.14/180)*t));
@@ -488,20 +490,6 @@ public:
                 //Serial.println("error");
                 return;
                 }
-                myFile = SD.open("Flight3.csv", FILE_WRITE);
-                myFile.print("Time (s)"); myFile.print("\t");
-
-                myFile.print("Rotation X (deg)"); myFile.print("\t");
-                myFile.print("Rotation Y (deg)"); myFile.print("\t");
-                myFile.print("Rotation Z (deg)"); myFile.print("\t");
-
-                myFile.print("Accel X (g)"); myFile.print("\t");
-                myFile.print("Accel Y (g)"); myFile.print("\t");
-                myFile.print("Accel Z (g)"); myFile.print("\t");
-
-                myFile.print("Altitude (ft)"); myFile.print("\t");
-                myFile.close();          
-
 }
 
 void write(){
